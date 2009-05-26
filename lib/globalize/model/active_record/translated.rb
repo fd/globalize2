@@ -30,7 +30,7 @@ module Globalize
                 :class_name   => globalize_proxy.name,
                 :extend       => Extensions,
                 :dependent    => :delete_all,
-                :foreign_key  => class_name.foreign_key
+                :foreign_key  => self.name.gsub(/.+::/, '').foreign_key
               )
 
               after_save :update_globalize_record              
@@ -90,7 +90,7 @@ module Globalize
                 raise BadMigrationFieldType, "Bad field type for #{name}, should be :string or :text"
               end 
             end
-            translation_table_name = self.name.underscore + '_translations'
+            translation_table_name = self.name.underscore.gsub('/', '_') + '_translations'
             self.connection.create_table(translation_table_name) do |t|
               t.references self.table_name.singularize
               t.string :locale
@@ -102,14 +102,14 @@ module Globalize
           end
 
           def drop_translation_table!
-            translation_table_name = self.name.underscore + '_translations'
+            translation_table_name = self.name.underscore.gsub('/', '_') + '_translations'
             self.connection.drop_table translation_table_name
           end
           
           private
           
           def i18n_attr(attribute_name)
-            self.base_class.name.underscore + "_translations.#{attribute_name}"
+            self.base_class.name.underscore.gsub('/', '_') + "_translations.#{attribute_name}"
           end          
         end
         

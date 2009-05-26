@@ -1,8 +1,8 @@
 # -*- encoding: utf-8 -*-
 
 Gem::Specification.new do |s|
-  s.name = %q{globalize2}
-  s.version = "0.0.1"
+  s.name = %q{simonmenke-globalize2}
+  s.version = "0.0.2"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Josh Harvey"]
