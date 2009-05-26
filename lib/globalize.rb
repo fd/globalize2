@@ -1,0 +1,3 @@
+
+module Globalize
+end
