@@ -92,7 +92,7 @@ module Globalize
             end
             translation_table_name = self.name.underscore.gsub('/', '_') + '_translations'
             self.connection.create_table(translation_table_name) do |t|
-              t.references self.table_name.singularize
+              t.integer self.name.gsub(/.+::/, '').foreign_key
               t.string :locale
               fields.each do |name, type|
                 t.column name, type
