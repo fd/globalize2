@@ -24,6 +24,8 @@ module Globalize
               include InstanceMethods
               extend  ClassMethods
               
+              metaclass.alias_method_chain :find_every, :globalize2
+              
               self.globalize_proxy = Globalize::Model::ActiveRecord.create_proxy_class(self)
               has_many(
                 :globalize_translations,
@@ -104,6 +106,16 @@ module Globalize
           def drop_translation_table!
             translation_table_name = self.name.underscore.gsub('/', '_') + '_translations'
             self.connection.drop_table translation_table_name
+          end
+          
+          def find_every_with_globalize2(options)
+            locale  = I18n.locale
+            locales = I18n.fallbacks[locale].map{ |tag| tag.to_s }
+            scope_options = { :joins => :globalize_translations,
+              :conditions => [ "#{i18n_attr('locale')} IN (?)", locales ] }
+            with_scope(:find => scope_options) do
+              find_every_without_globalize2(options)
+            end
           end
           
           private
