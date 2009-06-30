@@ -25,6 +25,7 @@ module Globalize
               extend  ClassMethods
               
               metaclass.alias_method_chain :find_every, :globalize2
+              metaclass.alias_method_chain :construct_finder_sql, :globalize2
               
               self.globalize_proxy = Globalize::Model::ActiveRecord.create_proxy_class(self)
               has_many(
@@ -116,6 +117,12 @@ module Globalize
             with_scope(:find => scope_options) do
               find_every_without_globalize2(options)
             end
+          end
+          
+          def construct_finder_sql_with_globalize2(options)
+            sql = construct_finder_sql_without_globalize2(options)
+            sql.sub! /SELECT(\s+DISTINCT)?/, 'SELECT DISTINCT'
+            sql
           end
           
           private
