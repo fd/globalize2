@@ -45,7 +45,7 @@ module Globalize
           when Hash
             Hash[*result.map do |key, value|
               [key, translation(value, meta)]
-            end.flatten]
+            end.flatten(1)]
           when Array
             result.map do |value|
               translation(value, meta)
