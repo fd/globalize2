@@ -24,8 +24,8 @@ module Globalize
               include InstanceMethods
               extend  ClassMethods
               
-              metaclass.alias_method_chain :find_every, :globalize2
-              metaclass.alias_method_chain :construct_finder_sql, :globalize2
+              singleton_class.alias_method_chain :find_every, :globalize2
+              singleton_class.alias_method_chain :construct_finder_sql, :globalize2
               
               self.globalize_proxy = Globalize::Model::ActiveRecord.create_proxy_class(self)
               has_many(
