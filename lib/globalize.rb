@@ -7,7 +7,7 @@ module Globalize
     end
 
     def fallbacks(locale)
-      fallbacks? ? I18n.fallbacks[locale] : [locale.to_sym]
+      fallbacks? ? I18n.fallbacks[locale.to_sym] : [locale.to_sym]
     end
   end
 end

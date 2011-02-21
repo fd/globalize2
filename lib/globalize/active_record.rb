@@ -22,7 +22,9 @@ module Globalize
 
         klass.class_eval do
           set_table_name(options[:table_name])
-          belongs_to target.name.underscore.gsub('/', '_')
+          belongs_to target.name.underscore.gsub('/', '_'),
+            :foreign_key => "#{target.name.underscore.split('/').last}_id",
+            :class_name => target.name
           def locale; read_attribute(:locale).to_sym; end
           def locale=(locale); write_attribute(:locale, locale.to_s); end
         end
@@ -41,7 +43,14 @@ module Globalize
       end
 
       def translates(*attr_names)
-        return if translates?
+        if translates?
+          attr_names = attr_names.map(&:to_sym)
+          attr_names.reject! { |n| self.translated_attribute_names.include?(n) }
+          self.translated_attribute_names.concat attr_names
+          attr_names.each { |attr_name| translated_attr_accessor(attr_name) }
+          return
+        end
+        
         options = attr_names.extract_options!
 
         class_inheritable_accessor :translation_class, :translated_attribute_names
@@ -51,10 +60,13 @@ module Globalize
 
         include InstanceMethods
         extend  ClassMethods, Migration
+        
+        singleton_class.alias_method_chain :find_every, :globalize2
+        singleton_class.alias_method_chain :construct_finder_sql, :globalize2
 
         after_save :save_translations!
         has_many :translations, :class_name  => translation_class.name,
-                                :foreign_key => class_name.foreign_key,
+                                :foreign_key => "#{self.name.underscore.split('/').last}_id",
                                 :dependent   => :delete_all,
                                 :extend      => HasManyExtensions
 
@@ -119,7 +131,7 @@ module Globalize
           super
         end
       end
-
+      
       protected
 
         def find_first_by_translated_attr_and_locales(name, value)
@@ -134,6 +146,8 @@ module Globalize
         end
 
         def translated_attr_accessor(name)
+          Rails.logger.debug [:globalize, self, name].inspect
+          
           define_method "#{name}=", lambda { |value|
             globalize.write(self.class.locale || I18n.locale, name, value)
             self[name] = value
@@ -146,6 +160,26 @@ module Globalize
 
         def translated_attr_name(name)
           "#{translation_class.table_name}.#{name}"
+        end
+        
+        alias_method :i18n_attr, :translated_attr_name
+        
+        def find_every_with_globalize2(options)
+          locales = Globalize.fallbacks(locale || I18n.locale).map(&:to_s)
+          # locales = locales.map { |l| l.to_s.inspect }
+          scope_options = {
+            :joins      => :translations,
+            :conditions => ["#{i18n_attr('locale')} IN (?)", locales],
+            :readonly   => false }
+          with_scope(:find => scope_options) do
+            find_every_without_globalize2(options)
+          end
+        end
+        
+        def construct_finder_sql_with_globalize2(options)
+          sql = construct_finder_sql_without_globalize2(options)
+          sql.sub! /SELECT(\s+DISTINCT)?/, 'SELECT DISTINCT'
+          sql
         end
     end
 
