@@ -146,8 +146,6 @@ module Globalize
         end
 
         def translated_attr_accessor(name)
-          Rails.logger.debug [:globalize, self, name].inspect
-          
           define_method "#{name}=", lambda { |value|
             globalize.write(self.class.locale || I18n.locale, name, value)
             self[name] = value
